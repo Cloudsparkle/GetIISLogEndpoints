@@ -8,7 +8,7 @@
 .INPUTS
   IIS Logfiles
 .OUTPUTS
-  None
+  CSV file with all endpoints in %TEMP% folder
 .NOTES
   Version:        1.0
   Author:         Bart Jacobs - @Cloudsparkle
@@ -21,40 +21,44 @@
 #Initialize variables
 $LogPath = "C:\logs\"
 $TempFile = $env:temp +"\WebLog.csv"
-$OutputFile = $env:temp + "\Endpoints.csv"   
-$DNSServer = "NITGNKADS1VP"
+$OutputFile = $env:temp + "\Endpoints.csv"
+$DNSServer = ""
 $CsvContents = @()
 
+#Gather all logfiles
 $LogFiles = Get-ChildItem –Path $LogPath -Filter *.log
 
 #Checks
 If ($LogFiles -eq $null)
-    {
+  {
     Write-Host -ForegroundColor Yellow "No logfiles found in specified path. Exiting..."
     exit 1
-    }
+  }
 
 $TempFileExists = Test-Path $TempFile
-If ($TempFileExists -eq $True) 
-    {Remove-Item $TempFile}
+If ($TempFileExists -eq $True)
+  {
+    Remove-Item $TempFile
+  }
 
 #Process all logfiles
 Foreach ($logfile in $LogFiles)
-{ 
-Write-Host -ForegroundColor Green "Reading logfile " +$logfile.FullName
-(Get-Content $logfile.FullName | Where-Object {$_ -notlike "#[S,V,D]*"}) -replace "#Fields: ","" | Out-File -append $TempFile
-}
- 
+  {
+    Write-Host -ForegroundColor Green "Reading logfile " +$logfile.FullName
+    (Get-Content $logfile.FullName | Where-Object {$_ -notlike "#[S,V,D]*"}) -replace "#Fields: ","" | Out-File -append $TempFile
+  }
+
 # Import the CSV file to memory
 $webLog = Import-Csv $TempFile -Delimiter " "
 
 #Extracting all unique IP's
 Write-Host -ForegroundColor Green "Gathering IP addresses..."
 $IPList = $weblog | Select-Object -Property 'c-ip' -Unique | Sort-Object -Property 'c-ip' -Descending
- 
+
 #Resolving IP to hostname
 Write-Host -ForegroundColor Green "Resolving IP addresses..."
-Foreach ($IP in $IPList) {
+Foreach ($IP in $IPList)
+  {
     $HostName = (Resolve-DnsName -Server $DNSServer $IP.'c-ip' -ErrorAction SilentlyContinue).NAMEHOST
     # write-host $HostName, $IP.'c-ip'
     $row = New-Object System.Object # Create an object to append to the array
@@ -62,7 +66,7 @@ Foreach ($IP in $IPList) {
     $row | Add-Member -MemberType NoteProperty -Name "IP" -Value $IP.'c-ip'
 
     $csvContents += $row # append the new data to the array#
-}
+  }
 
 Write-Host -ForegroundColor Green "Writing outpunt CSV File..."
 $csvContents | Export-CSV -path $OutputFile -NoTypeInformation
