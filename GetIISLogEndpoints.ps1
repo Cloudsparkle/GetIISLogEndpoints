@@ -21,8 +21,8 @@
 #Initialize variables
 $LogPath = "C:\logs\"
 $TempFile = $env:temp +"\WebLog.csv"
-$OutputFile = $env:temp + "\Endpoints.csv"   
-$DNSServer = "NITGNKADS1VP"
+$OutputFile = $env:temp + "\Endpoints.csv"
+$DNSServer = ""
 $CsvContents = @()
 
 $LogFiles = Get-ChildItem –Path $LogPath -Filter *.log -Recurse
@@ -35,23 +35,23 @@ If ($LogFiles -eq $null)
     }
 
 $TempFileExists = Test-Path $TempFile
-If ($TempFileExists -eq $True) 
+If ($TempFileExists -eq $True)
     {Remove-Item $TempFile}
 
 #Process all logfiles
 Foreach ($logfile in $LogFiles)
-{ 
+{
 Write-Host -ForegroundColor Green "Reading logfile" ($logfile.FullName)
 (Get-Content $logfile.FullName | Where-Object {$_ -notlike "#[S,V,D]*"}) -replace "#Fields: ","" | Out-File -append $TempFile
 }
- 
+
 # Import the CSV file to memory
 $webLog = Import-Csv $TempFile -Delimiter " "
 
 #Extracting all unique IP's
 Write-Host -ForegroundColor Green "Gathering IP addresses..."
 $IPList = $weblog | Select-Object -Property 'c-ip' -Unique | Sort-Object -Property 'c-ip' -Descending
- 
+
 #Resolving IP to hostname
 Write-Host -ForegroundColor Green "Resolving IP addresses..."
 Foreach ($IP in $IPList) {
