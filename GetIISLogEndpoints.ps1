@@ -25,7 +25,7 @@ $OutputFile = $env:temp + "\Endpoints.csv"
 $DNSServer = "NITGNKADS1VP"
 $CsvContents = @()
 
-$LogFiles = Get-ChildItem –Path $LogPath -Filter *.log
+$LogFiles = Get-ChildItem –Path $LogPath -Filter *.log -Recurse
 
 #Checks
 If ($LogFiles -eq $null)
@@ -41,7 +41,7 @@ If ($TempFileExists -eq $True)
 #Process all logfiles
 Foreach ($logfile in $LogFiles)
 { 
-Write-Host -ForegroundColor Green "Reading logfile " +$logfile.FullName
+Write-Host -ForegroundColor Green "Reading logfile" ($logfile.FullName)
 (Get-Content $logfile.FullName | Where-Object {$_ -notlike "#[S,V,D]*"}) -replace "#Fields: ","" | Out-File -append $TempFile
 }
  
