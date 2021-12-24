@@ -22,7 +22,7 @@
 $LogPath = "C:\logs\"
 $TempFile = $env:temp +"\WebLog.csv"
 $OutputFile = $env:temp + "\Endpoints.csv"
-$DNSServer = "s-be-ki-dc10.itglo.net"
+$DNSServer = ""
 $CsvContents = @()
 
 $LogFiles = Get-ChildItem –Path $LogPath -Filter *.log -Recurse
@@ -59,7 +59,7 @@ Foreach ($IP in $IPList) {
     {
         continue
     }
-    
+
     $HostName = (Resolve-DnsName -Server $DNSServer $IP.'c-ip' -ErrorAction SilentlyContinue).NAMEHOST
     # write-host $HostName, $IP.'c-ip'
     $row = New-Object System.Object # Create an object to append to the array

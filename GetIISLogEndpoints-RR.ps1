@@ -78,23 +78,23 @@ $IPList = $weblog | Select-Object -Property 'c-ip' -Unique | Sort-Object -Proper
 
 #Resolving IP to hostname
 Write-Host -ForegroundColor Green "Resolving IP addresses..."
-Foreach ($IP in $IPList) 
+Foreach ($IP in $IPList)
 {
     if (($IP.'c-ip' -eq 'c-ip') -or ($IP.'c-ip' -eq "127.0.0.1"))
     {
         continue
     }
-    
+
     $RegLM = ""
     $RegKeyLM = ""
     $Computername = ""
     $user = ""
     $IPOnline = $false
-    
+
     Write-Host "Processing IP:"$IP.'c-ip'
     $IPonline = Ping $IP.'c-ip' 100
     if ($IPonline -eq $True)
-    { 
+    {
         Try
         {
             $RegLM = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$IP.'c-ip')
@@ -103,7 +103,7 @@ Foreach ($IP in $IPList)
         {
             Write-Host "Catch"
         }
-           
+
         if (($RegLM.valuecount -ne "0") -or ($RegLM.valuecount -ne $null))
         {
             $RegKeyLM = $RegLM.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName")
@@ -111,11 +111,11 @@ Foreach ($IP in $IPList)
 
             $RegKeyLM2 = $RegLM.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI")
             $User = $RegKeyLM2.GetValue("LastLoggedOnUser")
-                        
+
             if ($user -ne $null)
             {
                 $aduser = $user.Split("\")
-                $aduser = $aduser[1]                 
+                $aduser = $aduser[1]
             }
         }
         else
@@ -123,14 +123,14 @@ Foreach ($IP in $IPList)
             Write-Host "Error accessing remote registry for IP:"$ip.'c-ip' -ForegroundColor red
 
         }
-        
-    }            
-        
+
+    }
+
     $row = New-Object System.Object # Create an object to append to the array
     $row | Add-Member -MemberType NoteProperty -Name "HostName" -Value $hostname
     $row | Add-Member -MemberType NoteProperty -Name "IP" -Value $IP.'c-ip'
     $row | Add-Member -MemberType NoteProperty -Name "Username" -Value $aduser
-        
+
 
     $csvContents += $row # append the new data to the array#
 }
