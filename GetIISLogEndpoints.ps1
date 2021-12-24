@@ -22,7 +22,7 @@
 $LogPath = "C:\logs\"
 $TempFile = $env:temp +"\WebLog.csv"
 $OutputFile = $env:temp + "\Endpoints.csv"
-$DNSServer = ""
+$DNSServer = "s-be-ki-dc10.itglo.net"
 $CsvContents = @()
 
 $LogFiles = Get-ChildItem –Path $LogPath -Filter *.log -Recurse
@@ -55,6 +55,11 @@ $IPList = $weblog | Select-Object -Property 'c-ip' -Unique | Sort-Object -Proper
 #Resolving IP to hostname
 Write-Host -ForegroundColor Green "Resolving IP addresses..."
 Foreach ($IP in $IPList) {
+    if (($IP.'c-ip' -eq 'c-ip') -or ($IP.'c-ip' -eq "127.0.0.1"))
+    {
+        continue
+    }
+    
     $HostName = (Resolve-DnsName -Server $DNSServer $IP.'c-ip' -ErrorAction SilentlyContinue).NAMEHOST
     # write-host $HostName, $IP.'c-ip'
     $row = New-Object System.Object # Create an object to append to the array
