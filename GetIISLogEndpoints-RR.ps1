@@ -78,59 +78,86 @@ $IPList = $weblog | Select-Object -Property 'c-ip' -Unique | Sort-Object -Proper
 
 #Resolving IP to hostname
 Write-Host -ForegroundColor Green "Resolving IP addresses..."
-Foreach ($IP in $IPList)
+Foreach ($IP in $IPList) 
 {
-    if (($IP.'c-ip' -eq 'c-ip') -or ($IP.'c-ip' -eq "127.0.0.1"))
+    if (($IP.'c-ip' -eq 'c-ip') -or ($IP.'c-ip' -eq "127.0.0.1") -or ($IP.'c-ip' -eq "::1"))
     {
         continue
     }
-
+    
     $RegLM = ""
-    $RegKeyLM = ""
+    $RegKeyLM = $null
+    $RegKeyLM2 = $null
     $Computername = ""
-    $user = ""
+    $User = ""
+    $aduser = ""
     $IPOnline = $false
-
+    
     Write-Host "Processing IP:"$IP.'c-ip'
     $IPonline = Ping $IP.'c-ip' 100
     if ($IPonline -eq $True)
-    {
-        Try
-        {
+    { 
+        #Try
+        #{
             $RegLM = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$IP.'c-ip')
-        }
-        Catch
+        #}
+        #Catch
+        #{
+        #    Write-Host "Catch"
+        #}
+        
+        if ($RegLM -ne "")
         {
-            Write-Host "Catch"
-        }
-
-        if (($RegLM.valuecount -ne "0") -or ($RegLM.valuecount -ne $null))
-        {
-            $RegKeyLM = $RegLM.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName")
-            $Computername = $RegKeyLM.GetValue("ComputerName")
-
-            $RegKeyLM2 = $RegLM.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI")
-            $User = $RegKeyLM2.GetValue("LastLoggedOnUser")
-
-            if ($user -ne $null)
+            Try
             {
-                $aduser = $user.Split("\")
-                $aduser = $aduser[1]
+                $RegKeyLM = $RegLM.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName")
             }
+            Catch
+            {
+                Write-Host "Error accessing remote registry for IP:"$ip.'c-ip' -ForegroundColor red
+            }
+                       
+            if ($RegKeyLM -ne $null)
+            {
+                $Computername = $RegKeyLM.GetValue("ComputerName")
+                Try
+                {
+                    $RegKeyLM2 = $RegLM.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\LogonUI")
+                }
+                Catch
+                {
+                    
+                }
+
+                if ($RegKeyLM2 -ne $null)
+                {
+                    $User = $RegKeyLM2.GetValue("LastLoggedOnUser")
+                        
+                    if ($user -ne $null)
+                    {
+                        $aduser = $user.Split("\")
+                        $aduser = $aduser[1]                 
+                    }
+                }
+
+            
+            }
+
+            
+            
+        
+        
+            #Write-Host "Error accessing remote registry for IP:"$ip.'c-ip' -ForegroundColor red
         }
-        else
-        {
-            Write-Host "Error accessing remote registry for IP:"$ip.'c-ip' -ForegroundColor red
-
-        }
-
-    }
-
+        
+        
+    }            
+        
     $row = New-Object System.Object # Create an object to append to the array
-    $row | Add-Member -MemberType NoteProperty -Name "HostName" -Value $hostname
+    $row | Add-Member -MemberType NoteProperty -Name "HostName" -Value $Computername
     $row | Add-Member -MemberType NoteProperty -Name "IP" -Value $IP.'c-ip'
     $row | Add-Member -MemberType NoteProperty -Name "Username" -Value $aduser
-
+        
 
     $csvContents += $row # append the new data to the array#
 }
