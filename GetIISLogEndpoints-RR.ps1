@@ -97,14 +97,14 @@ Foreach ($IP in $IPList)
     $IPonline = Ping $IP.'c-ip' 100
     if ($IPonline -eq $True)
     { 
-        #Try
-        #{
+        Try
+        {
             $RegLM = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$IP.'c-ip')
-        #}
-        #Catch
-        #{
-        #    Write-Host "Catch"
-        #}
+        }
+        Catch
+        {
+            Write-Host "Error accessing remote registry for IP:"$ip.'c-ip' -ForegroundColor red
+        }
         
         if ($RegLM -ne "")
         {
